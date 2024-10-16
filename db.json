@@ -1,0 +1,41 @@
+{
+  "employee": {
+    "id": 1,
+    "name": "John Doe",
+    "email": "john.doe@example.com"
+  },
+  "attendance": {
+    "status": "out",
+    "clockInTime": "2024-10-16T07:32:37.935Z",
+    "clockOutTime": "2024-10-16T07:32:54.342Z",
+    "totalHours": 0.04
+  },
+  "dailyUpdates": [
+    {
+      "id": "1",
+      "date": "2023-06-30",
+      "update": "Completed the frontend for Project A"
+    },
+    {
+      "id": "c7eb",
+      "date": "2024-10-16",
+      "update": "Developed Frontend for Tracker UI Project"
+    }
+  ],
+  "timesheet": [
+    {
+      "id": "1",
+      "date": "2023-06-30",
+      "projects": [
+        {
+          "name": "Project A",
+          "hours": 4
+        },
+        {
+          "name": "Project B",
+          "hours": 4
+        }
+      ]
+    }
+  ]
+}
