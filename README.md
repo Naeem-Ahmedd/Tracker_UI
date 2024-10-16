@@ -14,7 +14,7 @@ To run this project locally, follow these steps:
 2. Navigate to the project directory:
    
    ```bash
-   cd tracker-ui
+   cd Tracker_UI
    ```
 3. Install dependencies
    
