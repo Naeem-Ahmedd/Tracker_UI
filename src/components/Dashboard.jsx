@@ -10,6 +10,19 @@ const Dashboard = () => {
     clockInOut(newStatus); // Triggers the clock in/out action in context
   };
 
+  const formatTime = ({ hours, minutes, seconds }) => {
+    return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(
+      2,
+      "0"
+    )}:${String(seconds).padStart(2, "0")}`;
+  };
+  const timeObject = {
+    hours: totalHours.hours,
+    minutes: totalHours.minutes,
+    seconds: totalHours.seconds,
+  };
+  const timeString = formatTime(timeObject); // "00:00:00"
+
   return (
     <div className="mb-8 p-4 bg-customBgBox text-white shadow-md rounded-lg">
       {/* Display current date and time */}
@@ -43,10 +56,8 @@ const Dashboard = () => {
       </button>
       {/* Display total hours worked today */}
       <p className="mt-2 text-gray-800">
-        Total Hours Worked Today:{" "}
-        <span className="text-[#003262] font-bold">
-          {totalHours?.toFixed(2)} hours{" "}
-        </span>
+        Total Time Worked Today:{" "}
+        <span className="text-[#003262] font-bold">{timeString}</span>
       </p>
     </div>
   );

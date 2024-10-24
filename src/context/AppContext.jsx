@@ -7,7 +7,11 @@ export const AppProvider = ({ children }) => {
   const [employee, setEmployee] = useState({});
   const [attendance, setAttendance] = useState({});
   const [updates, setUpdates] = useState([]);
-  const [totalHours, setTotalHours] = useState(0); // To track hours worked today
+  const [totalHours, setTotalHours] = useState({
+    hours: 0,
+    minutes: 0,
+    seconds: 0,
+  }); // To track hours worked today
 
   useEffect(() => {
     const fetchData = async () => {
@@ -35,12 +39,20 @@ export const AppProvider = ({ children }) => {
     fetchData();
   }, []);
 
+  const convertMillisecondsToTime = (milliseconds) => {
+    const totalSeconds = Math.floor(milliseconds / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    return { hours, minutes, seconds };
+  };
+
   const calculateWorkedHours = (clockInTime, clockOutTime) => {
     const inTime = new Date(clockInTime);
     const outTime = new Date(clockOutTime);
     const diffInMs = outTime - inTime; // difference in milliseconds
-    const diffInHours = diffInMs / (1000 * 60 * 60); // convert to hours
-    return diffInHours.toFixed(2); // format to 2 decimal places
+    return diffInMs; // return milliseconds
   };
 
   const isSameDay = (date1, date2) => {
@@ -60,34 +72,29 @@ export const AppProvider = ({ children }) => {
       : null;
     const today = new Date();
 
-    // If clockInTime exists
     if (clockInTime) {
-      // Check if the clockInTime is from today
       if (isSameDay(clockInTime, today)) {
+        let totalMilliseconds = attendanceData.totalMilliseconds || 0; // Use milliseconds for total time
         if (!clockOutTime) {
-          // Employee is still clocked in, calculate hours from clockInTime to now
-          const workedHoursSoFar = calculateWorkedHours(clockInTime, today);
-          const totalWorkedHours =
-            (attendanceData.totalHours || 0) + parseFloat(workedHoursSoFar);
-          setTotalHours(totalWorkedHours);
+          const workedMilliseconds = calculateWorkedHours(clockInTime, today);
+          totalMilliseconds += workedMilliseconds; // add worked time
         } else {
-          // Employee has already clocked out, use the stored totalHours
-          setTotalHours(attendanceData.totalHours || 0);
+          totalMilliseconds = attendanceData.totalMilliseconds || 0; // if already clocked out, retain total
         }
+        setTotalHours(convertMillisecondsToTime(totalMilliseconds)); // convert and set
       } else {
-        // ClockInTime is from a different day, reset values
+        // Reset logic for different day
         const response = await axios.put("http://localhost:3001/attendance", {
           status: "out",
           clockInTime: null,
           clockOutTime: null,
-          totalHours: 0,
+          totalMilliseconds: 0,
         });
         setAttendance(response.data);
-        setTotalHours(0);
+        setTotalHours({ hours: 0, minutes: 0, seconds: 0 });
       }
     } else {
-      // No clockInTime means no hours worked today, set totalHours to 0
-      setTotalHours(0);
+      setTotalHours({ hours: 0, minutes: 0, seconds: 0 }); // No clock in
     }
   };
 
@@ -95,34 +102,32 @@ export const AppProvider = ({ children }) => {
     const currentTime = new Date();
 
     if (status === "in") {
-      // Clocking in
       const response = await axios.put("http://localhost:3001/attendance", {
         status: "in",
         clockInTime: currentTime,
-        clockOutTime: null, // Reset clockOutTime
-        totalHours: attendance.totalHours, // Retain previous total hours
+        clockOutTime: null,
+        totalMilliseconds: attendance.totalMilliseconds || 0,
       });
       setAttendance(response.data);
-      setTotalHours(response.data.totalHours);
+      setTotalHours(convertMillisecondsToTime(response.data.totalMilliseconds)); // convert and set
     } else {
-      // Clocking out
-      const clockInTime = attendance.clockInTime;
-      const clockOutTime = currentTime;
-
-      // Calculate worked hours for the day
-      const workedHours = calculateWorkedHours(clockInTime, clockOutTime);
-      const totalHours = (attendance.totalHours || 0) + parseFloat(workedHours);
+      const workedMilliseconds = calculateWorkedHours(
+        attendance.clockInTime,
+        currentTime
+      );
+      const totalMilliseconds =
+        (attendance.totalMilliseconds || 0) + workedMilliseconds;
 
       const response = await axios.put("http://localhost:3001/attendance", {
         status: "out",
         clockInTime: attendance.clockInTime,
-        clockOutTime: clockOutTime,
-        totalHours: totalHours,
+        clockOutTime: currentTime,
+        totalMilliseconds: totalMilliseconds,
       });
 
       setAttendance(response.data);
-      calculateTodayHours(response.data); // Update today’s hours
-      setTotalHours(response.data.totalHours);
+      calculateTodayHours(response.data);
+      setTotalHours(convertMillisecondsToTime(response.data.totalMilliseconds));
     }
   };
 
